@@ -1,4 +1,13 @@
-'use client';
+/**
+ * CodingChallengeModal Component
+ * 
+ * A modal dialog that presents coding challenges to players.
+ * Features:
+ * - Syntax-highlighted code editor
+ * - Real-time code validation
+ * - Test case display and results
+ * - Resizable editor
+ */
 
 import React, { useState, useEffect } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
@@ -9,10 +18,11 @@ import 'react-resizable/css/styles.css';
 import { CodingTask } from '../types/game';
 import { validateCode } from '../utils/codeValidator';
 
+// Props interface for the modal component
 interface CodingChallengeModalProps {
-    task: CodingTask;
-    onClose: () => void;
-    onSubmit: (code: string) => void;
+    task: CodingTask;             // The current coding task to solve
+    onClose: () => void;          // Callback when modal is closed
+    onSubmit: (code: string) => void;  // Callback when code is successfully validated
 }
 
 const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
@@ -20,6 +30,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
     onClose,
     onSubmit,
 }) => {
+    // State management
     const [code, setCode] = useState(task.boilerplateCode);
     const [editorHeight, setEditorHeight] = useState(200);
     const [validationResults, setValidationResults] = useState<{
@@ -34,17 +45,21 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
     } | null>(null);
     const [isValidating, setIsValidating] = useState(false);
 
-    // Reset code when task changes
+    // Reset code and validation results when task changes
     useEffect(() => {
         setCode(task.boilerplateCode);
         setValidationResults(null);
     }, [task.boilerplateCode]);
 
+    // Handle code submission and validation
     const handleSubmit = () => {
         setIsValidating(true);
         try {
+            // Validate the code against test cases
             const results = validateCode(code, task.testCases);
             setValidationResults(results);
+            
+            // Only call onSubmit if all tests pass
             if (results.success) {
                 onSubmit(code);
             }
@@ -58,7 +73,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
         setIsValidating(false);
     };
 
-    // Calculate stats
+    // Calculate code statistics
     const stats = {
         characters: code.length,
         lines: code.split('\n').length,
@@ -68,7 +83,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg w-full max-w-3xl flex flex-col" style={{ maxHeight: '90vh' }}>
-                {/* Fixed Header */}
+                {/* Modal Header */}
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold">Coding Challenge</h2>
@@ -81,14 +96,16 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                     </div>
                 </div>
 
-                {/* Scrollable Content */}
+                {/* Scrollable Content Area */}
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="space-y-6">
+                        {/* Challenge Description */}
                         <div>
                             <h3 className="text-xl font-semibold mb-2">{task.question}</h3>
                             <p className="text-gray-600">{task.description}</p>
                         </div>
                         
+                        {/* Test Cases Display */}
                         <div className="bg-gray-100 p-4 rounded-lg">
                             <h4 className="font-semibold mb-2">Test Cases:</h4>
                             <ul className="space-y-2">
@@ -102,13 +119,16 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                             </ul>
                         </div>
 
+                        {/* Hint Box */}
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                             <p className="text-yellow-700">
                                 <span className="font-bold">Hint:</span> {task.hintComment}
                             </p>
                         </div>
 
+                        {/* Code Editor Section */}
                         <div>
+                            {/* Code Statistics */}
                             <div className="mb-2 text-sm text-gray-600 flex justify-between items-center">
                                 <div className="space-x-4">
                                     <span>Lines: {stats.lines}</span>
@@ -119,6 +139,8 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                                     ↔️ Drag bottom edge to resize
                                 </div>
                             </div>
+
+                            {/* Resizable Code Editor */}
                             <ResizableBox
                                 width={Infinity}
                                 height={editorHeight}
@@ -144,7 +166,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                             </ResizableBox>
                         </div>
 
-                        {/* Test Results */}
+                        {/* Test Results Section */}
                         {validationResults && (
                             <div className={`p-4 rounded-lg ${
                                 validationResults.success 
@@ -179,7 +201,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                     </div>
                 </div>
 
-                {/* Fixed Footer with Buttons */}
+                {/* Modal Footer */}
                 <div className="p-6 border-t border-gray-200 bg-white rounded-b-lg">
                     <div className="flex justify-end space-x-4">
                         <button

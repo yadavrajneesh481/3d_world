@@ -1,6 +1,10 @@
+/**
+ * Interface defining the structure of validation results
+ * Contains overall success status, any errors, and individual test results
+ */
 interface ValidationResult {
-    success: boolean;
-    error?: string;
+    success: boolean;              // Whether all tests passed
+    error?: string;               // Any error message if validation failed
     testResults: {
         input: string;
         expectedOutput: string;
@@ -9,15 +13,29 @@ interface ValidationResult {
     }[];
 }
 
+/**
+ * Validates user-submitted code against a set of test cases
+ * @param code - The JavaScript code to validate
+ * @param testCases - Array of test cases with input and expected output
+ * @returns ValidationResult containing test results and any errors
+ */
 export function validateCode(code: string, testCases: { input: string; expectedOutput: string }[]): ValidationResult {
     try {
-        // Create a safe evaluation context
+        // Create a safe evaluation context using Function constructor
+        // This provides a sandbox for running the code without direct eval
         const evalContext = new Function('code', `
             try {
+                // Execute the code and extract the function name
                 ${code}
-                return { success: true, function: eval(code.match(/function\\s+(\\w+)/)[1]) };
+                return { 
+                    success: true, 
+                    function: eval(code.match(/function\\s+(\\w+)/)[1]) 
+                };
             } catch (error) {
-                return { success: false, error: error.message };
+                return { 
+                    success: false, 
+                    error: error.message 
+                };
             }
         `);
 
@@ -31,15 +49,19 @@ export function validateCode(code: string, testCases: { input: string; expectedO
             };
         }
 
+        // Get the actual function to test
         const testFunction = result.function;
+
+        // Run each test case
         const testResults = testCases.map(testCase => {
             try {
-                // Parse input based on type
+                // Convert numeric strings to actual numbers
+                // This helps with type coercion in JavaScript
                 const input = testCase.input.match(/^-?\d+$/) 
                     ? parseInt(testCase.input) 
                     : testCase.input;
 
-                // Run the test case
+                // Run the test case and convert result to string for comparison
                 const actualOutput = String(testFunction(input));
                 const expectedOutput = testCase.expectedOutput;
                 const passed = actualOutput === expectedOutput;
@@ -51,6 +73,7 @@ export function validateCode(code: string, testCases: { input: string; expectedO
                     passed
                 };
             } catch (error) {
+                // If the function throws an error during execution
                 return {
                     input: testCase.input,
                     expectedOutput: testCase.expectedOutput,
@@ -60,6 +83,7 @@ export function validateCode(code: string, testCases: { input: string; expectedO
             }
         });
 
+        // Check if all tests passed
         const allTestsPassed = testResults.every(result => result.passed);
 
         return {
@@ -67,6 +91,7 @@ export function validateCode(code: string, testCases: { input: string; expectedO
             testResults
         };
     } catch (error) {
+        // Handle any unexpected errors during validation
         return {
             success: false,
             error: `Evaluation Error: ${error.message}`,
