@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { ResizableBox } from 'react-resizable';
+import 'react-resizable/css/styles.css';
 import { CodingTask } from '../types/game';
 
 interface CodingChallengeModalProps {
@@ -15,15 +20,22 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
     onSubmit,
 }) => {
     const [code, setCode] = useState(task.boilerplateCode);
+    const [editorHeight, setEditorHeight] = useState(200);
 
     // Reset code when task changes
     useEffect(() => {
         setCode(task.boilerplateCode);
     }, [task.boilerplateCode]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         onSubmit(code);
+    };
+
+    // Calculate stats
+    const stats = {
+        characters: code.length,
+        lines: code.split('\n').length,
+        words: code.split(/\s+/).filter(word => word.length > 0).length
     };
 
     return (
@@ -70,12 +82,36 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                         </div>
 
                         <div>
-                            <textarea
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                className="w-full h-48 p-4 font-mono text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                style={{ whiteSpace: 'pre' }}
-                            />
+                            <div className="mb-2 text-sm text-gray-600 flex justify-between items-center">
+                                <div className="space-x-4">
+                                    <span>Lines: {stats.lines}</span>
+                                    <span>Characters: {stats.characters}</span>
+                                    <span>Words: {stats.words}</span>
+                                </div>
+                                <div className="text-xs">
+                                    ↔️ Drag bottom edge to resize
+                                </div>
+                            </div>
+                            <ResizableBox
+                                width={Infinity}
+                                height={editorHeight}
+                                minConstraints={[Infinity, 100]}
+                                maxConstraints={[Infinity, 500]}
+                                onResize={(e, { size }) => {
+                                    setEditorHeight(size.height);
+                                }}
+                                resizeHandles={['s']}
+                                className="rounded-lg overflow-hidden"
+                            >
+                                <CodeMirror
+                                    value={code}
+                                    height={`${editorHeight}px`}
+                                    theme={oneDark}
+                                    extensions={[javascript({ jsx: true })]}
+                                    onChange={(value) => setCode(value)}
+                                    className="border rounded-lg"
+                                />
+                            </ResizableBox>
                         </div>
                     </div>
                 </div>
