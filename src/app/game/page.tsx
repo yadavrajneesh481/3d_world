@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Player, GameState, CodingTaskWithPosition } from '../../types/game';
-import { usePlayerMovement } from '../../hooks/usePlayerMovement';
 
 // Dynamically import components with no SSR
 const GameCanvas = dynamic(() => import('../../components/GameCanvas'), { ssr: false });
@@ -64,7 +63,7 @@ const GamePage = () => {
             },
             {
                 id: '3',
-                x: 200,
+                x: 400,
                 y: 200,
                 question: 'Is Even Number',
                 description: 'Complete the function to check if a number is even.',
@@ -84,6 +83,14 @@ const GamePage = () => {
             }
         ]
     });
+
+    // Update gameState.players when currentPlayer changes
+    useEffect(() => {
+        setGameState(prev => ({
+            ...prev,
+            players: [currentPlayer]
+        }));
+    }, [currentPlayer]);
 
     // Movement handling
     const handleMove = useCallback((newX: number, newY: number) => {
@@ -127,7 +134,7 @@ const GamePage = () => {
     }
 
     return (
-        <div className="relative w-full h-screen">
+        <div className="relative w-full h-screen bg-gray-100">
             {/* Game Canvas takes full width when panel is closed, half width when open */}
             <div className={`absolute top-0 ${showCodingChallenge ? 'right-0 w-1/2' : 'inset-0'} h-full transition-all duration-300`}>
                 <GameCanvas 
