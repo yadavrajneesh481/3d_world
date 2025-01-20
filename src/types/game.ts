@@ -12,7 +12,7 @@ export interface GameState {
     players: Player[];   // List of all players in the game
     currentPlayer: Player | null;  // The player that this client controls
     gameStatus: 'waiting' | 'playing' | 'ended';  // Current game phase
-    codingTasks: CodingTask[];    // List of coding challenges to solve
+    codingTasks: CodingTaskWithPosition[];    // List of coding challenges to solve
 }
 
 // Structure for our coding challenges
@@ -29,3 +29,12 @@ export interface TestCase {
     input: string;         // Input for the coding challenge
     expectedOutput: string;  // Expected output for that input
 }
+
+// Extends CodingTask to include position on the map
+export interface CodingTaskWithPosition extends CodingTask {
+    x: number;          // Task's horizontal position on the map
+    y: number;          // Task's vertical position on the map
+}
+
+// Constants for game mechanics
+export const INTERACTION_DISTANCE = 50;  // Distance within which a player can interact with tasks
