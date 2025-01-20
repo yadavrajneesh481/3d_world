@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import GameCanvas from '../../components/GameCanvas';
 import { Player, GameState } from '../../types/game';
+import { usePlayerMovement } from '../../hooks/usePlayerMovement';
 
 const GamePage: React.FC = () => {
     // Initialize game state
@@ -13,19 +14,40 @@ const GamePage: React.FC = () => {
                 x: 100,
                 y: 100,
                 role: 'crewmate',
-                username: 'Player 1'
+                username: 'You'
             },
             {
                 id: '2',
                 x: 200,
                 y: 200,
                 role: 'impostor',
-                username: 'Player 2'
+                username: 'Bot'
             }
         ],
         currentPlayer: null,
-        gameStatus: 'waiting',
+        gameStatus: 'playing',
         codingTasks: []
+    });
+
+    // Set current player (in real game, this would come from authentication)
+    const currentPlayer = gameState.players[0];
+
+    // Handle player movement
+    const handlePlayerMove = useCallback((newX: number, newY: number) => {
+        setGameState(prev => ({
+            ...prev,
+            players: prev.players.map(player => 
+                player.id === currentPlayer.id 
+                    ? { ...player, x: newX, y: newY }
+                    : player
+            )
+        }));
+    }, [currentPlayer.id]);
+
+    // Use our movement hook
+    usePlayerMovement({
+        player: currentPlayer,
+        onMove: handlePlayerMove
     });
 
     return (
@@ -34,8 +56,12 @@ const GamePage: React.FC = () => {
             <div className="bg-white p-4 rounded-lg shadow-lg">
                 <GameCanvas 
                     players={gameState.players}
-                    currentPlayer={gameState.currentPlayer}
+                    currentPlayer={currentPlayer}
                 />
+            </div>
+            <div className="mt-4 text-center">
+                <p className="text-sm text-gray-600">Use arrow keys or WASD to move</p>
+                <p className="text-sm text-gray-600">Your role: {currentPlayer.role}</p>
             </div>
         </div>
     );
