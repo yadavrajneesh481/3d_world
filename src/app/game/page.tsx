@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import GameCanvas from '../../components/GameCanvas';
-import CodingChallengePanel from '../../components/CodingChallengePanel';
+import React, { useState, useCallback, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Player, GameState, CodingTaskWithPosition } from '../../types/game';
 import { usePlayerMovement } from '../../hooks/usePlayerMovement';
 
+// Dynamically import components with no SSR
+const GameCanvas = dynamic(() => import('../../components/GameCanvas'), { ssr: false });
+const CodingChallengePanel = dynamic(() => import('../../components/CodingChallengePanel'), { ssr: false });
+
 const GamePage = () => {
+    const [isClient, setIsClient] = useState(false);
+
+    // Set isClient to true on mount
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     // Player and game state management
     const [currentPlayer, setCurrentPlayer] = useState<Player>({
         id: '1',
@@ -110,6 +120,11 @@ const GamePage = () => {
             setActiveTask(null);
         }
     };
+
+    // Don't render anything on server
+    if (!isClient) {
+        return <div className="w-full h-screen bg-gray-100" />;
+    }
 
     return (
         <div className="relative w-full h-screen">
