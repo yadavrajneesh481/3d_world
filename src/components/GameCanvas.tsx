@@ -24,10 +24,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Reference to the canvas element
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isClient, setIsClient] = useState(false);
+    const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-    // Set isClient to true on mount
+    // Set isClient to true on mount and handle resize
     useEffect(() => {
         setIsClient(true);
+        
+        const updateDimensions = () => {
+            const container = canvasRef.current?.parentElement;
+            if (container) {
+                setDimensions({
+                    width: container.clientWidth,
+                    height: container.clientHeight
+                });
+            }
+        };
+
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+        return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
     // Draw game state
@@ -40,8 +55,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Set canvas dimensions
+        canvas.width = dimensions.width;
+        canvas.height = dimensions.height;
+
         // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+
+        // Draw grid for better visualization
+        ctx.strokeStyle = '#eee';
+        ctx.lineWidth = 1;
+        const gridSize = 50;
+        
+        for (let x = 0; x < dimensions.width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, dimensions.height);
+            ctx.stroke();
+        }
+        
+        for (let y = 0; y < dimensions.height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(dimensions.width, y);
+            ctx.stroke();
+        }
 
         // Draw tasks
         tasks.forEach(task => {
@@ -58,14 +96,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.fillText('E', task.x, task.y);
         });
 
-        // Draw players
+        // Draw other players
         players.forEach(player => {
-            ctx.fillStyle = player.color || (player.id === currentPlayer.id ? '#FF0000' : '#00FF00');
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, 15, 0, Math.PI * 2);
-            ctx.fill();
+            if (player.id !== currentPlayer.id) {
+                ctx.fillStyle = player.color || '#00FF00';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
         });
-    }, [players, tasks, currentPlayer.id, isClient]);
+
+        // Draw current player last (on top)
+        ctx.fillStyle = currentPlayer.color || '#FF0000';
+        ctx.beginPath();
+        ctx.arc(currentPlayer.x, currentPlayer.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw player role text
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(currentPlayer.role, currentPlayer.x, currentPlayer.y);
+
+        // Debug info
+        ctx.fillStyle = '#000';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`Position: (${Math.round(currentPlayer.x)}, ${Math.round(currentPlayer.y)})`, 10, 10);
+        ctx.fillText(`Canvas Size: ${dimensions.width}x${dimensions.height}`, 10, 30);
+
+    }, [players, tasks, currentPlayer, dimensions, isClient]);
 
     // Handle keyboard input
     useEffect(() => {
@@ -79,19 +141,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             switch (e.key.toLowerCase()) {
                 case 'w':
                 case 'arrowup':
-                    newY -= speed;
+                    newY = Math.max(15, newY - speed);
                     break;
                 case 's':
                 case 'arrowdown':
-                    newY += speed;
+                    newY = Math.min(dimensions.height - 15, newY + speed);
                     break;
                 case 'a':
                 case 'arrowleft':
-                    newX -= speed;
+                    newX = Math.max(15, newX - speed);
                     break;
                 case 'd':
                 case 'arrowright':
-                    newX += speed;
+                    newX = Math.min(dimensions.width - 15, newX + speed);
                     break;
                 case 'e':
                     // Check if player is near any task
@@ -117,7 +179,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPlayer, onMove, tasks, onTaskInteract, isClient]);
+    }, [currentPlayer, onMove, tasks, onTaskInteract, dimensions, isClient]);
 
     // Don't render anything on server
     if (!isClient) {
@@ -126,12 +188,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Render a canvas element
     return (
-        <canvas
-            ref={canvasRef}
-            width={800}
-            height={600}
-            className="border border-gray-300 bg-gray-100"
-        />
+        <div className="relative w-full h-full">
+            <canvas
+                ref={canvasRef}
+                className="w-full h-full bg-white"
+                style={{ touchAction: 'none' }}
+            />
+        </div>
     );
 };
 
