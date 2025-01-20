@@ -7,6 +7,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import { CodingTask } from '../types/game';
+import { validateCode } from '../utils/codeValidator';
 
 interface CodingChallengeModalProps {
     task: CodingTask;
@@ -21,14 +22,40 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
 }) => {
     const [code, setCode] = useState(task.boilerplateCode);
     const [editorHeight, setEditorHeight] = useState(200);
+    const [validationResults, setValidationResults] = useState<{
+        success: boolean;
+        error?: string;
+        testResults: {
+            input: string;
+            expectedOutput: string;
+            actualOutput: string;
+            passed: boolean;
+        }[];
+    } | null>(null);
+    const [isValidating, setIsValidating] = useState(false);
 
     // Reset code when task changes
     useEffect(() => {
         setCode(task.boilerplateCode);
+        setValidationResults(null);
     }, [task.boilerplateCode]);
 
     const handleSubmit = () => {
-        onSubmit(code);
+        setIsValidating(true);
+        try {
+            const results = validateCode(code, task.testCases);
+            setValidationResults(results);
+            if (results.success) {
+                onSubmit(code);
+            }
+        } catch (error) {
+            setValidationResults({
+                success: false,
+                error: `Unexpected error: ${error.message}`,
+                testResults: []
+            });
+        }
+        setIsValidating(false);
     };
 
     // Calculate stats
@@ -108,11 +135,47 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                                     height={`${editorHeight}px`}
                                     theme={oneDark}
                                     extensions={[javascript({ jsx: true })]}
-                                    onChange={(value) => setCode(value)}
+                                    onChange={(value) => {
+                                        setCode(value);
+                                        setValidationResults(null);
+                                    }}
                                     className="border rounded-lg"
                                 />
                             </ResizableBox>
                         </div>
+
+                        {/* Test Results */}
+                        {validationResults && (
+                            <div className={`p-4 rounded-lg ${
+                                validationResults.success 
+                                    ? 'bg-green-50 border-l-4 border-green-400' 
+                                    : 'bg-red-50 border-l-4 border-red-400'
+                            }`}>
+                                <h4 className="font-semibold mb-2">Test Results:</h4>
+                                {validationResults.error ? (
+                                    <p className="text-red-600">{validationResults.error}</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {validationResults.testResults.map((result, index) => (
+                                            <li key={index} className="font-mono text-sm">
+                                                <div className={`p-2 rounded ${
+                                                    result.passed ? 'bg-green-100' : 'bg-red-100'
+                                                }`}>
+                                                    <div>Input: {result.input}</div>
+                                                    <div>Expected: {result.expectedOutput}</div>
+                                                    <div>Actual: {result.actualOutput}</div>
+                                                    <div className={`font-bold ${
+                                                        result.passed ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
+                                                        {result.passed ? '✓ Passed' : '✗ Failed'}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -128,9 +191,14 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            disabled={isValidating}
+                            className={`px-4 py-2 rounded ${
+                                isValidating
+                                    ? 'bg-blue-300 cursor-not-allowed'
+                                    : 'bg-blue-500 hover:bg-blue-600'
+                            } text-white`}
                         >
-                            Submit Solution
+                            {isValidating ? 'Validating...' : 'Submit Solution'}
                         </button>
                     </div>
                 </div>
