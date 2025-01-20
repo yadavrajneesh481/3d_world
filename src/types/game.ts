@@ -20,6 +20,8 @@ export interface CodingTask {
     id: string;          // Unique identifier for each task
     question: string;    // The coding question to solve
     description: string; // Detailed description of the task
+    boilerplateCode: string;  // Starting code with placeholders
+    hintComment: string; // Hint for what code to write
     testCases: TestCase[];  // List of test cases to verify solution
     completed: boolean;     // Whether this task is done
 }

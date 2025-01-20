@@ -32,12 +32,18 @@ const GamePage: React.FC = () => {
                 id: 'task1',
                 x: 300,
                 y: 300,
-                question: 'FizzBuzz',
-                description: 'Write a function that returns "Fizz" for numbers divisible by 3, "Buzz" for numbers divisible by 5, and "FizzBuzz" for numbers divisible by both.',
+                question: 'Double the Number',
+                description: 'Complete the function to return double the input number.',
+                boilerplateCode: 
+`function doubleNumber(num) {
+    // TODO: Return double the input number
+    return 
+}`,
+                hintComment: 'Multiply the input number by 2',
                 testCases: [
-                    { input: '3', expectedOutput: 'Fizz' },
-                    { input: '5', expectedOutput: 'Buzz' },
-                    { input: '15', expectedOutput: 'FizzBuzz' }
+                    { input: '5', expectedOutput: '10' },
+                    { input: '0', expectedOutput: '0' },
+                    { input: '-3', expectedOutput: '-6' }
                 ],
                 completed: false
             },
@@ -45,11 +51,37 @@ const GamePage: React.FC = () => {
                 id: 'task2',
                 x: 500,
                 y: 400,
-                question: 'Palindrome Check',
-                description: 'Write a function that checks if a given string is a palindrome (reads the same forwards and backwards).',
+                question: 'Greet User',
+                description: 'Complete the function to return a greeting message.',
+                boilerplateCode:
+`function greetUser(name) {
+    // TODO: Return "Hello, [name]!"
+    return "Hello, " + 
+}`,
+                hintComment: 'Add the name parameter and an exclamation mark',
                 testCases: [
-                    { input: 'racecar', expectedOutput: 'true' },
-                    { input: 'hello', expectedOutput: 'false' }
+                    { input: 'Alice', expectedOutput: 'Hello, Alice!' },
+                    { input: 'Bob', expectedOutput: 'Hello, Bob!' }
+                ],
+                completed: false
+            },
+            {
+                id: 'task3',
+                x: 200,
+                y: 200,
+                question: 'Is Even Number',
+                description: 'Complete the function to check if a number is even.',
+                boilerplateCode:
+`function isEven(num) {
+    // TODO: Return true if num is even, false otherwise
+    // Hint: Use the modulo operator %
+    return num 
+}`,
+                hintComment: 'A number is even if dividing by 2 has no remainder',
+                testCases: [
+                    { input: '4', expectedOutput: 'true' },
+                    { input: '7', expectedOutput: 'false' },
+                    { input: '0', expectedOutput: 'true' }
                 ],
                 completed: false
             }

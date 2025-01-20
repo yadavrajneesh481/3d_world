@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CodingTask } from '../types/game';
 
 interface CodingChallengeModalProps {
@@ -14,7 +14,12 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
     onClose,
     onSubmit,
 }) => {
-    const [code, setCode] = useState('');
+    const [code, setCode] = useState(task.boilerplateCode);
+
+    // Reset code when task changes
+    useEffect(() => {
+        setCode(task.boilerplateCode);
+    }, [task.boilerplateCode]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,6 +55,12 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                             ))}
                         </ul>
                     </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                        <p className="text-yellow-700">
+                            <span className="font-bold">Hint:</span> {task.hintComment}
+                        </p>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -58,7 +69,7 @@ const CodingChallengeModal: React.FC<CodingChallengeModalProps> = ({
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             className="w-full h-64 p-4 font-mono text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="Write your solution here..."
+                            style={{ whiteSpace: 'pre' }}
                         />
                     </div>
 
