@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import GameCanvas from '../../components/GameCanvas';
-import CodingChallengeModal from '../../components/CodingChallengeModal';
+import CodingChallengePanel from '../../components/CodingChallengeModal';
 import { Player, GameState, CodingTaskWithPosition } from '../../types/game';
 import { usePlayerMovement } from '../../hooks/usePlayerMovement';
 
@@ -136,33 +136,52 @@ const GamePage: React.FC = () => {
         }
     };
 
+    const [showCodingChallenge, setShowCodingChallenge] = useState(false);
+    const [currentTask, setCurrentTask] = useState<CodingTaskWithPosition>({
+        id: '1',
+        question: 'Double the Number',
+        description: 'Write a function that takes a number as input and returns its double.',
+        boilerplateCode: 'function doubleNumber(num) {\n  // Write your code here\n  \n}',
+        testCases: [
+            { input: '2', expectedOutput: '4' },
+            { input: '-3', expectedOutput: '-6' },
+            { input: '0', expectedOutput: '0' },
+        ],
+        hintComment: 'Multiply the input number by 2',
+        x: 0,
+        y: 0
+    });
+
+    const handleTaskComplete = (code: string) => {
+        console.log('Task completed with code:', code);
+        setShowCodingChallenge(false);
+    };
+
+    // Function to trigger coding challenge (called from GameCanvas)
+    const triggerCodingChallenge = () => {
+        setShowCodingChallenge(true);
+    };
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-            <h1 className="text-3xl font-bold mb-4">Code Among Us</h1>
-            <div className="bg-white p-4 rounded-lg shadow-lg">
+        <div className="relative w-full h-screen">
+            {/* Game Canvas takes full width when panel is closed, half width when open */}
+            <div className={`absolute top-0 ${showCodingChallenge ? 'right-0 w-1/2' : 'inset-0'} h-full transition-all duration-300`}>
                 <GameCanvas 
                     players={gameState.players}
                     currentPlayer={currentPlayer}
                     tasks={gameState.codingTasks}
                     onTaskInteract={handleTaskInteract}
+                    onTriggerTask={triggerCodingChallenge}
                 />
-            </div>
-            <div className="mt-4 text-center">
-                <p className="text-sm text-gray-600">Use arrow keys or WASD to move</p>
-                <p className="text-sm text-gray-600">Press E to interact with tasks</p>
-                <p className="text-sm text-gray-600">Your role: {currentPlayer.role}</p>
-                <p className="text-sm text-gray-600">
-                    Tasks completed: {gameState.codingTasks.filter(t => t.completed).length}/{gameState.codingTasks.length}
-                </p>
             </div>
 
-            {activeTask && (
-                <CodingChallengeModal
-                    task={activeTask}
-                    onClose={() => setActiveTask(null)}
-                    onSubmit={handleTaskSubmit}
-                />
-            )}
+            {/* Coding Challenge Panel */}
+            <CodingChallengePanel
+                task={currentTask}
+                onClose={() => setShowCodingChallenge(false)}
+                onSubmit={handleTaskComplete}
+                isOpen={showCodingChallenge}
+            />
         </div>
     );
 };
