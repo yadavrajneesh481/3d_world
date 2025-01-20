@@ -1,7 +1,7 @@
 // 'use client' tells Next.js this is a client-side component
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Player, CodingTaskWithPosition } from '../types/game';
 
 // The props our canvas component expects
@@ -23,9 +23,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
     // Reference to the canvas element
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isClient, setIsClient] = useState(false);
+
+    // Set isClient to true on mount
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // Draw game state
     useEffect(() => {
+        if (!isClient) return;
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -57,10 +65,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.arc(player.x, player.y, 15, 0, Math.PI * 2);
             ctx.fill();
         });
-    }, [players, tasks, currentPlayer.id]);
+    }, [players, tasks, currentPlayer.id, isClient]);
 
     // Handle keyboard input
     useEffect(() => {
+        if (!isClient) return;
+
         const handleKeyPress = (e: KeyboardEvent) => {
             const speed = 5;
             let newX = currentPlayer.x;
@@ -107,7 +117,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPlayer, onMove, tasks, onTaskInteract]);
+    }, [currentPlayer, onMove, tasks, onTaskInteract, isClient]);
+
+    // Don't render anything on server
+    if (!isClient) {
+        return <div className="w-full h-full bg-gray-100" />;
+    }
 
     // Render a canvas element
     return (

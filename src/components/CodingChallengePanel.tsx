@@ -13,13 +13,23 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { javascript } from '@codemirror/lang-javascript';
-import { oneDark } from '@codemirror/theme-one-dark';
+import dynamic from 'next/dynamic';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import { CodingTask } from '../types/game';
 import { validateCode } from '../utils/codeValidator';
+
+// Dynamically import CodeMirror with no SSR
+const CodeMirror = dynamic(
+    () => import('@uiw/react-codemirror').then((mod) => mod.default),
+    { ssr: false }
+);
+
+// Dynamically import CodeMirror extensions
+const extensions = [
+    import('@codemirror/lang-javascript').then((mod) => mod.javascript({ jsx: true })),
+    import('@codemirror/theme-one-dark').then((mod) => mod.oneDark),
+];
 
 interface CodingChallengePanelProps {
     task: CodingTask;             // The current coding task to solve
@@ -34,7 +44,6 @@ const CodingChallengePanel: React.FC<CodingChallengePanelProps> = ({
     onSubmit,
     isOpen
 }) => {
-    // State management
     const [code, setCode] = useState(task.boilerplateCode);
     const [editorHeight, setEditorHeight] = useState(300);
     const [validationResults, setValidationResults] = useState<{
@@ -48,6 +57,18 @@ const CodingChallengePanel: React.FC<CodingChallengePanelProps> = ({
         }[];
     } | null>(null);
     const [isValidating, setIsValidating] = useState(false);
+    const [loadedExtensions, setLoadedExtensions] = useState<any[]>([]);
+    const [isClient, setIsClient] = useState(false);
+
+    // Load CodeMirror extensions
+    useEffect(() => {
+        Promise.all(extensions).then(setLoadedExtensions);
+    }, []);
+
+    // Set isClient to true on mount
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // Reset code and validation results when task changes
     useEffect(() => {
@@ -59,11 +80,9 @@ const CodingChallengePanel: React.FC<CodingChallengePanelProps> = ({
     const handleSubmit = () => {
         setIsValidating(true);
         try {
-            // Validate the code against test cases
             const results = validateCode(code, task.testCases);
             setValidationResults(results);
             
-            // Only call onSubmit if all tests pass
             if (results.success) {
                 onSubmit(code);
             }
@@ -84,7 +103,7 @@ const CodingChallengePanel: React.FC<CodingChallengePanelProps> = ({
         words: code.split(/\s+/).filter(word => word.length > 0).length
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !isClient) return null;
 
     return (
         <div className="fixed left-0 top-0 h-full w-1/2 bg-white shadow-lg flex flex-col">
@@ -155,17 +174,19 @@ const CodingChallengePanel: React.FC<CodingChallengePanelProps> = ({
                             resizeHandles={['s']}
                             className="rounded overflow-hidden"
                         >
-                            <CodeMirror
-                                value={code}
-                                height={`${editorHeight}px`}
-                                theme={oneDark}
-                                extensions={[javascript({ jsx: true })]}
-                                onChange={(value) => {
-                                    setCode(value);
-                                    setValidationResults(null);
-                                }}
-                                className="border rounded"
-                            />
+                            {loadedExtensions.length > 0 && (
+                                <CodeMirror
+                                    value={code}
+                                    height={`${editorHeight}px`}
+                                    theme="dark"
+                                    extensions={loadedExtensions}
+                                    onChange={(value) => {
+                                        setCode(value);
+                                        setValidationResults(null);
+                                    }}
+                                    className="border rounded"
+                                />
+                            )}
                         </ResizableBox>
                     </div>
 
